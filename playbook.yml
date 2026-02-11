@@ -10,6 +10,8 @@
       tags: ["fish", "shell"]
     - role: fish_functions
       tags: ["fish", "functions", "arc"]
+    - role: arc
+      tags: ["arc", "mount", "fusermount"]
 
   tasks:
     - name: Вывести информацию о системе

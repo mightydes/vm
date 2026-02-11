@@ -1,0 +1,63 @@
+---
+- name: Настроить fusermount для allow_other
+  ansible.builtin.lineinfile:
+    path: /etc/fuse.conf
+    line: "user_allow_other"
+    state: present
+    create: yes
+    mode: "0644"
+  become: yes
+
+- name: Получить домашнюю директорию текущего пользователя
+  ansible.builtin.shell: "getent passwd {{ ansible_user }} | cut -d: -f6"
+  register: user_home
+  changed_when: false
+
+- name: Создать директорию для systemd user services
+  ansible.builtin.file:
+    path: "{{ user_home.stdout }}/.config/systemd/user"
+    state: directory
+    mode: "0755"
+  when: user_home.stdout != ""
+
+- name: Создать systemd user service для arc-mount
+  ansible.builtin.copy:
+    dest: "{{ user_home.stdout }}/.config/systemd/user/arc-mount.service"
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Arc Mount Service
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=forking
+      ExecStart=/usr/bin/fish -c "arc-mount"
+      ExecStop=/usr/bin/fusermount -u %h/arcadia
+      Restart=on-failure
+      RestartSec=10
+
+      [Install]
+      WantedBy=default.target
+  when: user_home.stdout != ""
+
+- name: Включить и запустить arc-mount service для пользователя
+  ansible.builtin.systemd:
+    name: arc-mount.service
+    enabled: yes
+    state: started
+    scope: user
+    daemon_reload: yes
+  become: yes
+  become_user: "{{ ansible_user }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_user_uid }}"
+  when: user_home.stdout != ""
+
+- name: Вывести информацию о настройке
+  ansible.builtin.debug:
+    msg: |
+      Arc mount настроен:
+      - fusermount allow_other включен в /etc/fuse.conf
+      - systemd user service создан и включен для автозапуска
+      - arc-mount будет запускаться автоматически при входе пользователя
