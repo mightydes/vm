@@ -1,0 +1,18 @@
+---
+- name: Обновить кэш apt
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Установить базовые системные пакеты
+  ansible.builtin.apt:
+    name:
+      - tree
+      - net-tools # содержит netstat
+    state: present
+  become: yes
+
+- name: Вывести информацию об установленных пакетах
+  ansible.builtin.debug:
+    msg: "Системные пакеты установлены: tree, net-tools (netstat)"

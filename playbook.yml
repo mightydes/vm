@@ -4,6 +4,8 @@
   gather_facts: yes
 
   roles:
+    - role: system_packages
+      tags: ["system", "packages"]
     - role: fish_shell
       tags: ["fish", "shell"]
 

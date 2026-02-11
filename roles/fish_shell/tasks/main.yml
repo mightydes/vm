@@ -1,10 +1,4 @@
 ---
-- name: Обновить кэш apt
-  ansible.builtin.apt:
-    update_cache: yes
-    cache_valid_time: 3600
-  become: yes
-
 - name: Установить Fish shell
   ansible.builtin.apt:
     name: fish
@@ -23,20 +17,30 @@
     state: present
   become: yes
 
-- name: Установить Fish как оболочку по умолчанию для пользователя
-  ansible.builtin.user:
-    name: "{{ ansible_user }}"
-    shell: "{{ fish_path.stdout }}"
-  become: yes
+- name: Получить домашнюю директорию текущего пользователя
+  ansible.builtin.shell: "getent passwd {{ ansible_user }} | cut -d: -f6"
+  register: user_home
+  changed_when: false
 
-- name: Создать директорию конфигурации Fish
+- name: Создать директорию конфигурации Fish для текущего пользователя
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/fish"
+    path: "{{ user_home.stdout }}/.config/fish"
     state: directory
     mode: "0755"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+  when: user_home.stdout != ""
+
+- name: Добавить автозапуск Fish в .bashrc для динамических пользователей
+  ansible.builtin.blockinfile:
+    path: "{{ user_home.stdout }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Fish shell"
+    block: |
+      # Автоматически запускать Fish shell для интерактивных сессий
+      if [[ $- == *i* ]] && command -v fish &> /dev/null && [[ -z "$FISH_VERSION" ]]; then
+        exec fish
+      fi
+    create: yes
+  when: user_home.stdout != ""
 
 - name: Вывести информацию об установке
   ansible.builtin.debug:
-    msg: "Fish shell установлен и настроен как оболочка по умолчанию для пользователя {{ ansible_user }}"
+    msg: "Fish shell установлен и настроен для пользователя {{ ansible_user }} через автозапуск в .bashrc"
