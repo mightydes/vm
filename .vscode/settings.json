@@ -1,0 +1,10 @@
+{
+  // Включать форматирование при сохранении
+  "editor.formatOnSave": true,
+
+  // Форматировать при вставке (опционально)
+  "editor.formatOnPaste": false,
+
+  // Включить автоматическое добавление новой строки
+  "files.insertFinalNewline": true
+}
