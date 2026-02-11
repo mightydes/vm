@@ -1,0 +1,37 @@
+---
+- name: Получить домашнюю директорию текущего пользователя
+  ansible.builtin.shell: "getent passwd {{ ansible_user }} | cut -d: -f6"
+  register: user_home
+  changed_when: false
+
+- name: Создать директорию для Fish функций
+  ansible.builtin.file:
+    path: "{{ user_home.stdout }}/.config/fish/functions"
+    state: directory
+    mode: "0755"
+  when: user_home.stdout != ""
+
+- name: Создать Fish функцию arc-kick
+  ansible.builtin.template:
+    src: arc-kick.fish.j2
+    dest: "{{ user_home.stdout }}/.config/fish/functions/arc-kick.fish"
+    mode: "0644"
+  when: user_home.stdout != ""
+
+- name: Создать Fish функцию arc-mount
+  ansible.builtin.template:
+    src: arc-mount.fish.j2
+    dest: "{{ user_home.stdout }}/.config/fish/functions/arc-mount.fish"
+    mode: "0644"
+  when: user_home.stdout != ""
+
+- name: Создать Fish функцию arc-pr
+  ansible.builtin.template:
+    src: arc-pr.fish.j2
+    dest: "{{ user_home.stdout }}/.config/fish/functions/arc-pr.fish"
+    mode: "0644"
+  when: user_home.stdout != ""
+
+- name: Вывести информацию об установленных функциях
+  ansible.builtin.debug:
+    msg: "Fish функции установлены: arc-kick, arc-mount, arc-pr"

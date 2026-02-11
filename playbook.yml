@@ -8,6 +8,8 @@
       tags: ["system", "packages"]
     - role: fish_shell
       tags: ["fish", "shell"]
+    - role: fish_functions
+      tags: ["fish", "functions", "arc"]
 
   tasks:
     - name: Вывести информацию о системе
