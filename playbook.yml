@@ -1,0 +1,18 @@
+---
+- name: Настройка VM разработчика (Ubuntu 24.04)
+  hosts: dev_vm
+  gather_facts: yes
+
+  roles:
+    - role: fish_shell
+      tags: ["fish", "shell"]
+
+  tasks:
+    - name: Вывести информацию о системе
+      ansible.builtin.debug:
+        msg: |
+          Система настроена:
+          - OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          - Hostname: {{ ansible_hostname }}
+          - User: {{ ansible_user }}
+      tags: ["info"]

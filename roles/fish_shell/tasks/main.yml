@@ -1,0 +1,42 @@
+---
+- name: Обновить кэш apt
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Установить Fish shell
+  ansible.builtin.apt:
+    name: fish
+    state: present
+  become: yes
+
+- name: Получить путь к Fish shell
+  ansible.builtin.command: which fish
+  register: fish_path
+  changed_when: false
+
+- name: Проверить, что Fish в списке разрешенных оболочек
+  ansible.builtin.lineinfile:
+    path: /etc/shells
+    line: "{{ fish_path.stdout }}"
+    state: present
+  become: yes
+
+- name: Установить Fish как оболочку по умолчанию для пользователя
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    shell: "{{ fish_path.stdout }}"
+  become: yes
+
+- name: Создать директорию конфигурации Fish
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/fish"
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Вывести информацию об установке
+  ansible.builtin.debug:
+    msg: "Fish shell установлен и настроен как оболочка по умолчанию для пользователя {{ ansible_user }}"
