@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# arc обычно зовёт tool так: <tool> --wait /path/to/file
+if [[ "${1-}" == "--wait" ]]; then
+  shift
+fi
+
+MERGED="${1-}"
+if [[ -z "$MERGED" ]]; then
+  exit 1
+fi
+
+dir="$(dirname -- "$MERGED")"
+basefile="$(basename -- "$MERGED")"
+
+# foo.bar -> foo_LOCAL.bar / foo_REMOTE.bar / foo_BASE.bar
+# foo     -> foo_LOCAL / foo_REMOTE / foo_BASE
+if [[ "$basefile" == *.* ]]; then
+  stem="${basefile%.*}"
+  ext="${basefile##*.}"
+  LOCAL="${dir}/${stem}_LOCAL.${ext}"
+  REMOTE="${dir}/${stem}_REMOTE.${ext}"
+  BASE="${dir}/${stem}_BASE.${ext}"
+else
+  stem="$basefile"
+  LOCAL="${dir}/${stem}_LOCAL"
+  REMOTE="${dir}/${stem}_REMOTE"
+  BASE="${dir}/${stem}_BASE"
+fi
+
+# Fallback: если arc не создал 3-way файлы, откроем просто файл
+if [[ ! -f "$LOCAL" || ! -f "$REMOTE" || ! -f "$BASE" ]]; then
+  exec code --wait "$MERGED"
+fi
+
+exec code --wait --merge "$LOCAL" "$REMOTE" "$BASE" "$MERGED"

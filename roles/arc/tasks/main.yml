@@ -13,6 +13,30 @@
   register: user_home
   changed_when: false
 
+- name: Создать файл конфигурации arc
+  ansible.builtin.copy:
+    dest: "{{ user_home.stdout }}/.arcconfig"
+    mode: "0644"
+    content: |
+      [core]
+          editor = code --wait
+
+      [merge]
+          tool = code
+
+      [mergetool "code"]
+          path = ~/code_merge.sh
+          keepBackup = false
+          trustExitCode = true
+  when: user_home.stdout != ""
+
+- name: Создать скрипт code_merge.sh для merge tool
+  ansible.builtin.template:
+    src: code_merge.sh.j2
+    dest: "{{ user_home.stdout }}/code_merge.sh"
+    mode: "0755"
+  when: user_home.stdout != ""
+
 - name: Создать директорию для systemd user services
   ansible.builtin.file:
     path: "{{ user_home.stdout }}/.config/systemd/user"
