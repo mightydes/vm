@@ -10,9 +10,10 @@
     name:
       - tree
       - net-tools # содержит netstat
+      - shfmt
     state: present
   become: yes
 
 - name: Вывести информацию об установленных пакетах
   ansible.builtin.debug:
-    msg: "Системные пакеты установлены: tree, net-tools (netstat)"
+    msg: "Системные пакеты установлены: tree, net-tools (netstat), shfmt"
