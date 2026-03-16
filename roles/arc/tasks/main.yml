@@ -19,7 +19,7 @@
     mode: "0644"
     content: |
       [core]
-          editor = code --wait
+          editor = nano
 
       [merge]
           tool = code
