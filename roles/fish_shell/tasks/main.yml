@@ -29,11 +29,18 @@
     mode: "0755"
   when: user_home.stdout != ""
 
-- name: Добавить автозапуск Fish в .bashrc для динамических пользователей
+- name: Добавить загрузку ~/.env и автозапуск Fish в .bashrc
   ansible.builtin.blockinfile:
     path: "{{ user_home.stdout }}/.bashrc"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - Fish shell"
     block: |
+      # Загрузить переменные окружения из ~/.env если файл существует
+      if [ -f "$HOME/.env" ]; then
+        set -a
+        source "$HOME/.env"
+        set +a
+      fi
+      
       # Автоматически запускать Fish shell для интерактивных сессий
       if [[ $- == *i* ]] && command -v fish &> /dev/null && [[ -z "$FISH_VERSION" ]]; then
         exec fish
@@ -41,6 +48,13 @@
     create: yes
   when: user_home.stdout != ""
 
+- name: Создать конфигурацию Fish для загрузки ~/.env
+  ansible.builtin.template:
+    src: config.fish.j2
+    dest: "{{ user_home.stdout }}/.config/fish/config.fish"
+    mode: "0644"
+  when: user_home.stdout != ""
+
 - name: Вывести информацию об установке
   ansible.builtin.debug:
-    msg: "Fish shell установлен и настроен для пользователя {{ ansible_user }} через автозапуск в .bashrc"
+    msg: "Fish shell установлен и настроен для пользователя {{ ansible_user }} через автозапуск в .bashrc. Переменные окружения из ~/.env будут загружаться автоматически."
