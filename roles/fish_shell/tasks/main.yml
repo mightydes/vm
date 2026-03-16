@@ -29,6 +29,20 @@
     mode: "0755"
   when: user_home.stdout != ""
 
+- name: Добавить загрузку ~/.env в .bash_profile для неинтерактивных сессий
+  ansible.builtin.blockinfile:
+    path: "{{ user_home.stdout }}/.bash_profile"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Environment variables"
+    block: |
+      # Загрузить переменные окружения из ~/.env если файл существует
+      if [ -f "$HOME/.env" ]; then
+        set -a
+        source "$HOME/.env"
+        set +a
+      fi
+    create: yes
+  when: user_home.stdout != ""
+
 - name: Добавить загрузку ~/.env и автозапуск Fish в .bashrc
   ansible.builtin.blockinfile:
     path: "{{ user_home.stdout }}/.bashrc"
