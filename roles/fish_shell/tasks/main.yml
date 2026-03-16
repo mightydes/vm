@@ -29,7 +29,7 @@
     mode: "0755"
   when: user_home.stdout != ""
 
-- name: Добавить загрузку ~/.env в .bash_profile для неинтерактивных сессий
+- name: Добавить загрузку ~/.env в .bash_profile
   ansible.builtin.blockinfile:
     path: "{{ user_home.stdout }}/.bash_profile"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - Environment variables"
@@ -43,21 +43,29 @@
     create: yes
   when: user_home.stdout != ""
 
-- name: Добавить загрузку ~/.env и автозапуск Fish в .bashrc
+- name: Добавить автозапуск Fish в .bash_profile для login сессий
+  ansible.builtin.blockinfile:
+    path: "{{ user_home.stdout }}/.bash_profile"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Fish shell autostart"
+    block: |
+      # Автоматически запускать Fish shell для интерактивных login сессий
+      # Запускается только на первом уровне (SHLVL=1), чтобы можно было вернуться в bash
+      if [[ $- == *i* ]] && [[ ${SHLVL:-0} -eq 1 ]] && command -v fish >/dev/null; then
+        exec fish
+      fi
+    create: yes
+  when: user_home.stdout != ""
+
+- name: Добавить загрузку ~/.env в .bashrc
   ansible.builtin.blockinfile:
     path: "{{ user_home.stdout }}/.bashrc"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - Fish shell"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Environment variables"
     block: |
       # Загрузить переменные окружения из ~/.env если файл существует
       if [ -f "$HOME/.env" ]; then
         set -a
         source "$HOME/.env"
         set +a
-      fi
-      
-      # Автоматически запускать Fish shell для интерактивных сессий
-      if [[ $- == *i* ]] && command -v fish &> /dev/null && [[ -z "$FISH_VERSION" ]]; then
-        exec fish
       fi
     create: yes
   when: user_home.stdout != ""
@@ -71,4 +79,4 @@
 
 - name: Вывести информацию об установке
   ansible.builtin.debug:
-    msg: "Fish shell установлен и настроен для пользователя {{ ansible_user }} через автозапуск в .bashrc. Переменные окружения из ~/.env будут загружаться автоматически."
+    msg: "Fish shell установлен и настроен для пользователя {{ ansible_user }} через автозапуск в .bash_profile (для NSS-пользователей). Переменные окружения из ~/.env будут загружаться автоматически. Для запуска bash просто выполните команду 'bash'."
